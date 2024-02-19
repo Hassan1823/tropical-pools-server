@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Activation Email</title>
+<!-- 
+    <style>
+      .main-container {
+        width: 100%; /* Change 'full' to '100%' */
+        min-height: 100vh; /* Change 'screen' to '100vh' */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+      }
+    </style> -->
+  </head>
+  <body>
+    <div>
+      <h1><b>Welcome to Tropical Pools</b></h1>
+      <h1>-------------------------</h1>
+
+      <p>Hello <b><%= user.name %></b></p>
+      <p>Your Activation Code is <b> <%= activationCode %> </b></p>
+      <br />
+      <br />
+      <br />
+      <p>Note: This code is expired after 30 minutes</p>
+    </div>
+  </body>
+</html>
