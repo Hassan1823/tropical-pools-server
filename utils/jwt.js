@@ -2,7 +2,7 @@ import { config } from "dotenv";
 config();
 
 export const accessTokenExpire = parseInt(
-  process.env.ACCESS_TOKEN_EXPIRE || "1200",
+  process.env.ACCESS_TOKEN_EXPIRE || "300",
   10
 );
 export const refreshTokenExpire = parseInt(
@@ -12,15 +12,15 @@ export const refreshTokenExpire = parseInt(
 
 // options for cookies
 export const accessTokenOptions = {
-  expires: new Date(Date.now() + accessTokenExpire * 1000),
-  maxAge: accessTokenExpire * 1000,
+  expires: new Date(Date.now() + accessTokenExpire * 60 * 60 * 1000),
+  maxAge: accessTokenExpire * 60 * 60 * 1000,
   httpOnly: true,
   sameSite: "lax",
 };
 
 export const refreshTokenOptions = {
-  expires: new Date(Date.now() + refreshTokenExpire * 1000),
-  maxAge: refreshTokenExpire * 1000,
+  expires: new Date(Date.now() + refreshTokenExpire * 24 * 60 * 60 * 1000),
+  maxAge: refreshTokenExpire * 24 * 60 * 60 * 1000,
   httpOnly: true,
   sameSite: "lax",
 };
@@ -36,11 +36,6 @@ export const sendToken = (user, statusCode, res) => {
 
   res.cookie("access_token", accessToken, accessTokenOptions);
   res.cookie("refresh_token", refreshToken, refreshTokenOptions);
-
-  // console.log("access token");
-  // console.log(res.cookie("access_token"));
-  // console.log("refresh token");
-  // console.log(res.cookie("refresh_token"));
 
   res.status(statusCode).json({
     success: true,

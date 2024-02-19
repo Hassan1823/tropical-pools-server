@@ -10,9 +10,14 @@ import {
   resetPassword,
   socialAuth,
   updateAccessToken,
+  userData,
 } from "../controllers/user.controller.js";
 import { isAuthenticated } from "../middleware/auth.js";
+import { sendQuery } from "../controllers/query.controller.js";
+// import { sendQuery } from "../controllers/query.controller.js";
 const userRouter = express.Router();
+
+//! user routes
 
 userRouter.post("/registration", registerUser);
 
@@ -31,5 +36,10 @@ userRouter.get("/refresh-token", updateAccessToken);
 userRouter.get("/me", isAuthenticated, getUserInfo);
 
 userRouter.post("/social-auth", socialAuth);
+
+userRouter.get("/user-queries", isAuthenticated, userData);
+
+// ! queries routes
+userRouter.post("/send-query", isAuthenticated, sendQuery);
 
 export default userRouter;

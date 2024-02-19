@@ -4,13 +4,12 @@ import userModel from "../models/user.model.js";
 import ErrorHandler from "../utils/errorHandler.js";
 
 import { config } from "dotenv";
-import sendMail from "../utils/sendMail.js";
 import {
   accessTokenOptions,
   refreshTokenOptions,
   sendToken,
 } from "../utils/jwt.js";
-import { isAuthenticated } from "../middleware/auth.js";
+import sendMail from "../utils/sendMail.js";
 config();
 
 import bcrypt from "bcryptjs";
@@ -247,11 +246,54 @@ export const confirmResetPassword = CatchAsyncError(async (req, res, next) => {
 });
 
 // ! refresh token on refresh
+// export const updateAccessToken = CatchAsyncError(async (req, res, next) => {
+//   try {
+//     const refresh_token = req.cookies.refresh_token;
+
+//     const decoded = jwt.verify(refresh_token, process.env.REFRESH_TOKEN);
+//     const message = `🥲 Couldn't Refresh Token`;
+
+//     if (!decoded) {
+//       return next(new ErrorHandler(message, 400));
+//     }
+
+//     const user = await userModel.findById(decoded.id);
+//     if (!user) {
+//       return next(new ErrorHandler(message, 400));
+//     }
+
+//     const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN, {
+//       expiresIn: "30m",
+//     });
+
+//     const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN, {
+//       expiresIn: "3d",
+//     });
+
+//     req.user = user;
+
+//     res.cookie("access_token", accessToken, accessTokenOptions);
+//     res.cookie("refresh_token", refreshToken, refreshTokenOptions);
+
+//     res.status(200).json({
+//       status: "success",
+//       accessToken,
+//     });
+
+//     // console.log(decoded._id);
+//   } catch (error) {
+//     return next(new ErrorHandler(error.message, 400));
+//   }
+// });
+
+// ! update access tokens
 export const updateAccessToken = CatchAsyncError(async (req, res, next) => {
   try {
     const refresh_token = req.cookies.refresh_token;
+    // console.log(`😌 Refresh Token : ${refresh_token}`);
 
     const decoded = jwt.verify(refresh_token, process.env.REFRESH_TOKEN);
+
     const message = `🥲 Couldn't Refresh Token`;
 
     if (!decoded) {
@@ -264,7 +306,7 @@ export const updateAccessToken = CatchAsyncError(async (req, res, next) => {
     }
 
     const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN, {
-      expiresIn: "3d",
+      expiresIn: "5m",
     });
 
     const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN, {
@@ -280,8 +322,6 @@ export const updateAccessToken = CatchAsyncError(async (req, res, next) => {
       status: "success",
       accessToken,
     });
-
-    // console.log(decoded._id);
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
   }
@@ -324,6 +364,31 @@ export const socialAuth = CatchAsyncError(async (req, res, next) => {
     } else {
       sendToken(user, 200, res);
     }
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
+
+// !-------------------
+// ! get user queries
+
+export const userData = CatchAsyncError(async (req, res, next) => {
+  try {
+    const userID = req.user._id;
+
+    if (!userID) {
+      return next(new ErrorHandler("Please Login", 400));
+    }
+
+    const user = await userModel
+      .findById(userID)
+      .select("queries")
+      .populate("queries");
+
+    res.status(200).json({
+      success: true,
+      data: user,
+    });
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
   }
