@@ -14,6 +14,12 @@ import {
 } from "../controllers/user.controller.js";
 import { isAuthenticated } from "../middleware/auth.js";
 import { sendQuery } from "../controllers/query.controller.js";
+import {
+  addToCart,
+  createProduct,
+  deleteProduct,
+  productReview,
+} from "../controllers/product.controller.js";
 // import { sendQuery } from "../controllers/query.controller.js";
 const userRouter = express.Router();
 
@@ -41,5 +47,16 @@ userRouter.get("/user-queries", isAuthenticated, userData);
 
 // ! queries routes
 userRouter.post("/send-query", isAuthenticated, sendQuery);
+
+// ! products routes
+
+userRouter.post("/create-product", isAuthenticated, createProduct);
+
+userRouter.post("/add-to-cart", isAuthenticated, addToCart);
+
+userRouter.post("/delete-product", isAuthenticated, deleteProduct);
+
+// ! review routes
+userRouter.post("/create-review", isAuthenticated, productReview);
 
 export default userRouter;

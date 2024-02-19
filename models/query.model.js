@@ -1,6 +1,4 @@
 import mongoose from "mongoose";
-import { config } from "dotenv";
-config();
 
 // ~ to validate the email pattern
 const emailRegexPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
