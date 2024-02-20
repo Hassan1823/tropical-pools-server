@@ -92,39 +92,75 @@ export const productReview = CatchAsyncError(async (req, res, next) => {
 
     const { rating, review, product } = req.body;
 
-    const existingReview = await reviewModel.findOne({
-      user: user._id,
-      product: product,
-    });
-
-    if (existingReview) {
-      return next(
-        new ErrorHandler("You have already reviewed this product", 400)
-      );
-    }
-
     const productExist = await productModel.findById(product);
 
     if (!productExist) {
       return next(new ErrorHandler("Product Not Found", 404));
     }
 
-    const createReview = await reviewModel.create({
-      rating,
-      review,
-      name: user.name,
+    const productRating = productExist.rating;
+
+    if (rating > 5 || rating < 1) {
+      return next(new ErrorHandler("Invalid Ratings", 400));
+    }
+
+    const existingReview = await reviewModel.findOne({
       user: user._id,
-      product,
+      product: product,
     });
 
-    user.reviews.push(createReview._id);
+    if (existingReview) {
+      // ~ if review is already added then update the it
+      existingReview.rating = rating;
+      existingReview.review = review;
 
-    await user.save();
+      await reviewModel.findByIdAndUpdate(
+        { _id: existingReview._id },
+        existingReview
+      );
 
-    res.status(200).json({
-      success: true,
-      review: createReview,
-    });
+      //! Update the product's rating based on all reviews
+      const allReviews = await reviewModel.find({ product: product });
+      let totalRating = 0;
+      allReviews.forEach((review) => {
+        totalRating += review.rating;
+      });
+      productExist.rating = totalRating / allReviews.length;
+      await productExist.save();
+
+      await res.status(200).json({
+        success: true,
+        message: "Review Updated successfully",
+        review: existingReview,
+      });
+    } else {
+      const createReview = await reviewModel.create({
+        rating,
+        review,
+        name: user.name,
+        user: user._id,
+        product,
+      });
+
+      user.reviews.push(createReview._id);
+
+      await user.save();
+
+      // Update the product's rating based on all reviews
+      const allReviews = await reviewModel.find({ product: product });
+      let totalRating = 0;
+      allReviews.forEach((review) => {
+        totalRating += review.rating;
+      });
+      productExist.rating = totalRating / allReviews.length;
+      await productExist.save();
+
+      res.status(200).json({
+        success: true,
+        message: "Review Added successfully",
+        review: createReview,
+      });
+    }
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
   }
@@ -137,10 +173,29 @@ export const addToCart = CatchAsyncError(async (req, res, next) => {
     const user = req.user;
 
     if (user) {
-      const { product } = req.body;
+      const { product, quantity } = req.body;
 
-      user.products.push(product);
+      const productExist = await productModel.findById(product);
 
+      if (!productExist) {
+        return next(new ErrorHandler("Product Not Found", 404));
+      }
+
+      const productQuantity = productExist.quantity;
+
+      if ((productExist.quantity ?? 0) < quantity) {
+        return next(new ErrorHandler("You do not have enough quantity", 400));
+      }
+      const newProductQuantity = productQuantity - quantity;
+      console.log("newProductQuantity :");
+      console.log(newProductQuantity);
+
+      productExist.quantity = newProductQuantity;
+      await productExist.save();
+
+      const data = { product, quantity, status: "pending" };
+
+      user.products.push(data);
       await user.save();
 
       res.status(200).json({
@@ -148,6 +203,21 @@ export const addToCart = CatchAsyncError(async (req, res, next) => {
         message: "Product Added To Cart",
       });
     }
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
+
+// ! product check out
+export const checkOut = CatchAsyncError(async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return next(new ErrorHandler("Please Login To Access"));
+    }
+
+    const { checkoutId } = req.body;
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
   }

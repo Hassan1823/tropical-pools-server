@@ -50,8 +50,19 @@ const userSchema = new mongoose.Schema(
     ],
     products: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Product",
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+        },
+        quantity: {
+          type: Number,
+          default: 1,
+        },
+        status: {
+          type: String,
+          enum: ["pending", "processing", "shipped", "delivered"],
+          default: "pending",
+        },
       },
     ],
   },
