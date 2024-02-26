@@ -245,47 +245,6 @@ export const confirmResetPassword = CatchAsyncError(async (req, res, next) => {
   }
 });
 
-// ! refresh token on refresh
-// export const updateAccessToken = CatchAsyncError(async (req, res, next) => {
-//   try {
-//     const refresh_token = req.cookies.refresh_token;
-
-//     const decoded = jwt.verify(refresh_token, process.env.REFRESH_TOKEN);
-//     const message = `🥲 Couldn't Refresh Token`;
-
-//     if (!decoded) {
-//       return next(new ErrorHandler(message, 400));
-//     }
-
-//     const user = await userModel.findById(decoded.id);
-//     if (!user) {
-//       return next(new ErrorHandler(message, 400));
-//     }
-
-//     const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN, {
-//       expiresIn: "30m",
-//     });
-
-//     const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN, {
-//       expiresIn: "3d",
-//     });
-
-//     req.user = user;
-
-//     res.cookie("access_token", accessToken, accessTokenOptions);
-//     res.cookie("refresh_token", refreshToken, refreshTokenOptions);
-
-//     res.status(200).json({
-//       status: "success",
-//       accessToken,
-//     });
-
-//     // console.log(decoded._id);
-//   } catch (error) {
-//     return next(new ErrorHandler(error.message, 400));
-//   }
-// });
-
 // ! update access tokens
 export const updateAccessToken = CatchAsyncError(async (req, res, next) => {
   try {
@@ -306,7 +265,7 @@ export const updateAccessToken = CatchAsyncError(async (req, res, next) => {
     }
 
     const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN, {
-      expiresIn: "5m",
+      expiresIn: "30m",
     });
 
     const refreshToken = jwt.sign({ id: user._id }, process.env.REFRESH_TOKEN, {
@@ -389,6 +348,133 @@ export const userData = CatchAsyncError(async (req, res, next) => {
       success: true,
       data: user,
     });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
+
+// !------------------
+// ! user cart products
+
+export const userCart = CatchAsyncError(async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return next(new ErrorHandler("Please Login To View Cart"));
+    }
+
+    const cart = await userModel
+      .findById(user._id)
+      .select("products.product products.quantity products.status products._id")
+      .populate("products.product");
+
+    res.status(200).json({
+      success: true,
+      cart,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
+
+// !-------------
+// ! delete item from the cart
+export const deleteCartItem = CatchAsyncError(async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return next(new ErrorHandler("Please Login To View Cart"));
+    }
+
+    const { productId } = req.body;
+
+    let matchedProductIndex;
+
+    // Loop through the user's products array to find the index of the product to delete
+    user.products.forEach((item, idx) => {
+      if (item._id.toString() === productId) {
+        matchedProductIndex = idx;
+        return; // Break the loop once match is found
+      }
+    });
+
+    // Check if the product was found in the user's cart
+    if (matchedProductIndex === undefined) {
+      return next(new ErrorHandler("Product not found in cart"));
+    }
+
+    // Remove the product from the user's cart using splice method
+    user.products.splice(matchedProductIndex, 1);
+
+    // Update the user's cart in the database
+    await user.save();
+
+    // Log the updated cart to console for debugging purposes
+    console.log(user.products);
+
+    // Respond with a success message after deleting the product
+    res.status(200).json({
+      success: true,
+      message: "Product deleted successfully",
+    });
+  } catch (error) {
+    // If any error occurs during execution, return an error message with status code 400
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
+
+// !---------------------
+// ! confirm user order
+export const confirmOrder = CatchAsyncError(async (req, res, next) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return next(new ErrorHandler("Please Login To Confirm Order"));
+    }
+
+    const { status } = req.body;
+
+    if (!status || !Array.isArray(user.products)) {
+      return next(new ErrorHandler("Invalid Input"));
+    }
+
+    // Check if all products are in 'processing' state
+    const allProcessing = user.products.every(
+      (product) => product.status === "processing"
+    );
+
+    if (allProcessing) {
+      return next(new ErrorHandler("All Products Are Processing"));
+    }
+
+    let changedProductCount = 0;
+
+    user.products.forEach((product) => {
+      if (product.status !== "processing") {
+        product.status = status;
+        changedProductCount++;
+      }
+    });
+
+    if (changedProductCount > 0) {
+      await user.save();
+
+      res.status(200).json({
+        success: true,
+        message: `${changedProductCount} Product${
+          changedProductCount > 1 ? "s" : ""
+        } Updated`,
+        status: user.products,
+      });
+    } else {
+      res.status(200).json({
+        success: false,
+        message: "No Changes Made",
+        status: user.products,
+      });
+    }
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
   }

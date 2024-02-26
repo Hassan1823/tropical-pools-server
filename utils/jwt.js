@@ -2,7 +2,7 @@ import { config } from "dotenv";
 config();
 
 export const accessTokenExpire = parseInt(
-  process.env.ACCESS_TOKEN_EXPIRE || "300",
+  process.env.ACCESS_TOKEN_EXPIRE || "1200",
   10
 );
 export const refreshTokenExpire = parseInt(

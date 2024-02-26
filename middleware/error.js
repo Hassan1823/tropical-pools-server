@@ -24,7 +24,7 @@ export const ErrorMiddleware = (err, req, res, next) => {
 
   //   ~ JWT token expired error
   if (err.name === "TokenExpiredError") {
-    const message = `Expired JWT Token , Please try again `;
+    const message = `Please Reload The Page `;
     err = new ErrorHandler(message, 400);
   }
 
@@ -33,5 +33,3 @@ export const ErrorMiddleware = (err, req, res, next) => {
     message: err.message,
   });
 };
-
-
