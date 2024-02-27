@@ -193,7 +193,13 @@ export const addToCart = CatchAsyncError(async (req, res, next) => {
       productExist.quantity = newProductQuantity;
       await productExist.save();
 
-      const data = { product, quantity, status: "pending" };
+      const data = {
+        product,
+        quantity,
+        status: "pending",
+        productName: productExist.title,
+        productPrice: productExist.price,
+      };
 
       user.products.push(data);
       await user.save();
@@ -322,7 +328,7 @@ export const productsByNames = CatchAsyncError(async (req, res, next) => {
       currentPage,
     });
   } catch (error) {
-    return next(new ErrorHandler(error, "500"));
+    return next(new ErrorHandler(error.message, 400));
   }
 });
 
@@ -343,6 +349,106 @@ export const getAllProductsReview = CatchAsyncError(async (req, res, next) => {
       success: true,
       allReviews,
     });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
+
+// ! -----------------
+// ! get all orders
+
+export const getAllOrders = async (req, res, next) => {
+  try {
+    const products = await userModel.aggregate([
+      {
+        $match: {
+          "products.status": {
+            $in: ["processing", "delivered", "shipped"],
+          },
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          products: {
+            $filter: {
+              input: "$products",
+              as: "product",
+              cond: { $ne: ["$$product.status", "pending"] },
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          productsTotalPrice: { $sum: "$products.productPrice" },
+        },
+      },
+      {
+        $project: {
+          name: 1,
+          products: 1,
+          totalPrice: "$productsTotalPrice",
+        },
+      },
+    ]);
+
+    if (products.length === 0) {
+      return next(new ErrorHandler("No Orders Found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      orders: products,
+    });
+  } catch (err) {
+    return next(new ErrorHandler(err.message, 400));
+  }
+};
+
+// ! ------------------
+// ! change status
+export const changeStatus = CatchAsyncError(async (req, res, next) => {
+  try {
+    // Checking authorization
+    const user = req.user;
+    if (!user || user.role !== "admin") {
+      return next(
+        new ErrorHandler("You are not authorized to perform this action", 400)
+      );
+    }
+
+    const { status, orderId } = req.body;
+
+    // Finding the relevant user and updating their products
+    const updatedUserPromises = [];
+    await userModel
+      .find()
+      .then((users) => {
+        users.forEach((user) => {
+          const filteredProducts = user.products.filter(
+            (p) => p._id.toString() === orderId
+          );
+
+          if (filteredProducts.length > 0) {
+            const selectedProduct = filteredProducts[0];
+
+            selectedProduct.status = status; // Update the status here
+
+            updatedUserPromises.push(user.save()); // Save the modified user document
+          }
+        });
+
+        Promise.all(updatedUserPromises).catch((err) =>
+          next(new ErrorHandler(err))
+        );
+      })
+      .finally(() => {
+        res.status(200).json({
+          success: true,
+          message: "Updated product status successfully.",
+        });
+      });
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
   }

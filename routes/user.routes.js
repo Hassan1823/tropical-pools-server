@@ -19,8 +19,10 @@ import { isAuthenticated } from "../middleware/auth.js";
 import { sendQuery } from "../controllers/query.controller.js";
 import {
   addToCart,
+  changeStatus,
   createProduct,
   deleteProduct,
+  getAllOrders,
   getAllProducts,
   getAllProductsById,
   getAllProductsReview,
@@ -75,9 +77,15 @@ userRouter.post("/product-by-id", getAllProductsById);
 
 userRouter.post("/product-by-name", productsByNames);
 
+userRouter.post("/change-status", isAuthenticated, changeStatus);
+
 // ! review routes
 userRouter.post("/create-review", isAuthenticated, productReview);
 
 userRouter.get("/all-reviews", getAllProductsReview);
+
+// ! orders
+
+userRouter.get("/all-orders", getAllOrders);
 
 export default userRouter;
