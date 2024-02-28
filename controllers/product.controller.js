@@ -391,6 +391,12 @@ export const getAllOrders = async (req, res, next) => {
           totalPrice: "$productsTotalPrice",
         },
       },
+      {
+        $sort: { createdAt: -1 }, // Sort by createdAt field in descending order
+      },
+      // {
+      //   $limit: 10 // Limit to the latest 10 orders (adjust as needed)
+      // }
     ]);
 
     if (products.length === 0) {

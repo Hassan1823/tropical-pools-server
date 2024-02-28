@@ -2,6 +2,8 @@ import express from "express";
 
 import {
   activateUser,
+  allUsers,
+  changeUserRole,
   confirmOrder,
   confirmResetPassword,
   deleteCartItem,
@@ -59,6 +61,10 @@ userRouter.get("/user-cart", isAuthenticated, userCart);
 userRouter.post("/delete-cart-product", isAuthenticated, deleteCartItem);
 
 userRouter.post("/confirm-order", isAuthenticated, confirmOrder);
+
+userRouter.get("/all-users", isAuthenticated, allUsers);
+
+userRouter.post("/user-role", isAuthenticated, changeUserRole);
 
 // ! queries routes
 userRouter.post("/send-query", isAuthenticated, sendQuery);

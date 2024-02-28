@@ -479,3 +479,56 @@ export const confirmOrder = CatchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler(error.message, 400));
   }
 });
+
+// !----------------
+// ! get all users
+export const allUsers = CatchAsyncError(async (req, res, next) => {
+  try {
+    const user = req.user;
+    if (user.role !== "admin") {
+      return next(
+        new ErrorHandler("You are not authorized to perform this action", 400)
+      );
+    }
+
+    const users = await userModel.find().select("name email role _id");
+
+    if (users.length === 0) {
+      return next(new ErrorHandler("No Users Found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      users,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
+
+// ! ----------
+// ! change user role
+export const changeUserRole = CatchAsyncError(async (req, res, next) => {
+  try {
+    const user = req.user;
+    if (user.role !== "admin") {
+      return next(
+        new ErrorHandler("You are not authorized to perform this action", 400)
+      );
+    }
+
+    const { userId, role } = req.body;
+    const userRole = await userModel.findByIdAndUpdate(userId, { role });
+
+    if (!userRole) {
+      return next(new ErrorHandler("No User Found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Role Updated",
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
