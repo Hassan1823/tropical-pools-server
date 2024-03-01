@@ -98,6 +98,14 @@ export const productReview = CatchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("Product Not Found", 404));
     }
 
+    const userPurchased = user.products.find(
+      (item) => item.product.toString() === product
+    );
+
+    if (!userPurchased || userPurchased.status === "pending") {
+      return next(new ErrorHandler("Purchase the Product to review", 404));
+    }
+
     // const productRating = productExist.rating;
 
     if (rating > 5 || rating < 1) {
@@ -248,7 +256,11 @@ export const getAllProducts = CatchAsyncError(async (req, res, next) => {
 
     const skipProduct = (currentPage - 1) * limit;
 
-    const products = await productModel.find().skip(skipProduct).limit(limit);
+    const products = await productModel
+      .find()
+      .skip(skipProduct)
+      .limit(limit)
+      .sort({ createdAt: -1 });
     if (!products) {
       return next(new ErrorHandler("No Products Found", 404));
     }

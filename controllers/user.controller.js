@@ -364,14 +364,63 @@ export const userCart = CatchAsyncError(async (req, res, next) => {
       return next(new ErrorHandler("Please Login To View Cart"));
     }
 
-    const cart = await userModel
+    let cart = await userModel
       .findById(user._id)
       .select("products.product products.quantity products.status products._id")
       .populate("products.product");
 
+    if (cart.length === 0 || !cart) {
+      return next(new ErrorHandler("No Cart Found", 404));
+    }
+
+    // Access the 'products' array within the 'cart' object and filter based on 'status'
+    const filteredProducts = cart.products.filter(
+      (product) => product.status === "pending"
+    );
+
     res.status(200).json({
       success: true,
-      cart,
+      cart: {
+        _id: cart._id,
+        products: filteredProducts,
+      },
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
+
+// !---------------------------
+//! active orders
+
+export const getActiveOrders = CatchAsyncError(async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return next(new ErrorHandler("Please Login To View Cart"));
+    }
+
+    let cart = await userModel
+      .findById(user._id)
+      .select("products.product products.quantity products.status products._id")
+      .populate("products.product");
+
+    if (cart.length === 0 || !cart) {
+      return next(new ErrorHandler("No Cart Found", 404));
+    }
+
+    // Access the 'products' array within the 'cart' object and filter based on 'status'
+    const filteredProducts = cart.products.filter(
+      (product) => product.status !== "pending"
+    );
+
+    res.status(200).json({
+      success: true,
+      cart: {
+        _id: cart._id,
+        products: filteredProducts,
+      },
     });
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));

@@ -43,7 +43,63 @@ export const sendQuery = CatchAsyncError(async (req, res, next) => {
       });
       res.status(200).json({
         success: true,
-        message: `Please Check Your ${process.env.SMTP_MAIL}`,
+        message: `Query Submitted Successfully`,
+      });
+    } catch (error) {
+      return next(new ErrorHandler(error.message, 400));
+    }
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
+
+// !-------------------
+// ! get all queries
+export const getAllQueries = CatchAsyncError(async (req, res, next) => {
+  try {
+    const user = req.user;
+    if (!user.role === "admin") {
+      return next(new ErrorHandler("You must be an admin", 400));
+    }
+
+    const allQueries = await queryModel.find().sort({ createdAt: -1 });
+
+    if (!allQueries.length > 0 || !allQueries) {
+      return next(new ErrorHandler("No Queries found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      allQueries,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
+
+// ! ----------
+//! query reply to the user
+export const sendQueryReply = CatchAsyncError(async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    if (!user.role === "admin") {
+      return next(new ErrorHandler("You must be an admin", 400));
+    }
+
+    const { email, reply } = req.body;
+
+    const data = { reply, email };
+    try {
+      await sendMail({
+        email: email,
+        subject: "Reply from admin",
+        template: "query-reply.ejs",
+        data,
+      });
+      res.status(200).json({
+        success: true,
+        message: `Reply Submitted Successfully`,
       });
     } catch (error) {
       return next(new ErrorHandler(error.message, 400));

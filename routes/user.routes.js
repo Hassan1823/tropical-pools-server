@@ -7,6 +7,7 @@ import {
   confirmOrder,
   confirmResetPassword,
   deleteCartItem,
+  getActiveOrders,
   getUserInfo,
   loginUser,
   logoutUser,
@@ -18,7 +19,11 @@ import {
   userData,
 } from "../controllers/user.controller.js";
 import { isAuthenticated } from "../middleware/auth.js";
-import { sendQuery } from "../controllers/query.controller.js";
+import {
+  getAllQueries,
+  sendQuery,
+  sendQueryReply,
+} from "../controllers/query.controller.js";
 import {
   addToCart,
   changeStatus,
@@ -58,6 +63,8 @@ userRouter.get("/user-queries", isAuthenticated, userData);
 
 userRouter.get("/user-cart", isAuthenticated, userCart);
 
+userRouter.get("/user-active-orders", isAuthenticated, getActiveOrders);
+
 userRouter.post("/delete-cart-product", isAuthenticated, deleteCartItem);
 
 userRouter.post("/confirm-order", isAuthenticated, confirmOrder);
@@ -68,6 +75,10 @@ userRouter.post("/user-role", isAuthenticated, changeUserRole);
 
 // ! queries routes
 userRouter.post("/send-query", isAuthenticated, sendQuery);
+
+userRouter.get("/all-queries", isAuthenticated, getAllQueries);
+
+userRouter.post("/query-reply", isAuthenticated, sendQueryReply);
 
 // ! products routes
 
