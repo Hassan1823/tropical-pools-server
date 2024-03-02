@@ -461,7 +461,7 @@ export const deleteCartItem = CatchAsyncError(async (req, res, next) => {
     await user.save();
 
     // Log the updated cart to console for debugging purposes
-    console.log(user.products);
+    // console.log(user.products);
 
     // Respond with a success message after deleting the product
     res.status(200).json({
