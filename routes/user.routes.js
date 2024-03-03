@@ -33,8 +33,10 @@ import {
   getAllProducts,
   getAllProductsById,
   getAllProductsReview,
+  getProductReview,
   productReview,
   productsByNames,
+  productsByPrice,
 } from "../controllers/product.controller.js";
 // import { sendQuery } from "../controllers/query.controller.js";
 const userRouter = express.Router();
@@ -94,12 +96,16 @@ userRouter.post("/product-by-id", getAllProductsById);
 
 userRouter.post("/product-by-name", productsByNames);
 
+userRouter.post("/product-by-price", productsByPrice);
+
 userRouter.post("/change-status", isAuthenticated, changeStatus);
 
 // ! review routes
 userRouter.post("/create-review", isAuthenticated, productReview);
 
 userRouter.get("/all-reviews", getAllProductsReview);
+
+userRouter.post("/product-reviews", getProductReview);
 
 // ! orders
 

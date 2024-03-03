@@ -174,6 +174,31 @@ export const productReview = CatchAsyncError(async (req, res, next) => {
   }
 });
 
+// ! -----------------------------
+// ! get review according to the product
+export const getProductReview = CatchAsyncError(async (req, res, next) => {
+  try {
+    const { productId } = req.body;
+
+    const productsReviews = await reviewModel
+      .find({ product: productId })
+      .skip(0)
+      .limit(6)
+      .sort({ createdAt: -1 });
+
+    if (!productsReviews || productsReviews.length === 0) {
+      return next(new ErrorHandler("No Reviews found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      productsReviews,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
+
 // ! add to cart
 
 export const addToCart = CatchAsyncError(async (req, res, next) => {
@@ -322,6 +347,48 @@ export const productsByNames = CatchAsyncError(async (req, res, next) => {
       .find({
         title: { $regex: title, $options: "i" },
       })
+      .skip(skipProduct)
+      .limit(limit);
+
+    if (!products || products.length === 0) {
+      return next(new ErrorHandler("No Products Found", 404));
+    }
+
+    if (currentPage <= 0 || currentPage > totalPages) {
+      return next(new ErrorHandler("Invalid Page Number", 400));
+    }
+
+    res.status(200).json({
+      success: true,
+      products,
+      totalPages,
+      currentPage,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
+
+// !--------------------------
+// ! search product by price
+export const productsByPrice = CatchAsyncError(async (req, res, next) => {
+  try {
+    let { first, second, limit, currentPage } = req.body;
+
+    limit = limit || 5;
+    currentPage = currentPage || 1;
+
+    // * filtering the data from db
+    const totalPages = Math.ceil(
+      (await productModel
+        .find({ price: { $gte: first, $lte: second } })
+        .countDocuments()) / limit
+    );
+
+    const skipProduct = (currentPage - 1) * limit;
+
+    const products = await productModel
+      .find({ price: { $gte: first, $lte: second } })
       .skip(skipProduct)
       .limit(limit);
 
