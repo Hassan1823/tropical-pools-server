@@ -538,3 +538,43 @@ export const changeStatus = CatchAsyncError(async (req, res, next) => {
     return next(new ErrorHandler(error.message, 400));
   }
 });
+
+// ! ----------------------
+// ! update the product
+export const updateProduct = CatchAsyncError(async (req, res, next) => {
+  try {
+    // const user = req.user;
+
+    // if (!user && !user.role === "admin") {
+    //   return next(
+    //     new ErrorHandler("You are not authorized to perform this action", 400)
+    //   );
+    // }
+    const productId = req.params.id;
+    const { image, title, description, price, quantity } = req.body;
+
+    const data = { image, title, description, price, quantity };
+
+    const newProduct = await productModel.findByIdAndUpdate(
+      productId,
+      {
+        $set: data,
+      },
+      {
+        new: true,
+      }
+    );
+
+    if (!newProduct) {
+      return next(new ErrorHandler("Product Not Found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      newProduct,
+      message: "Product updated successfully",
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});

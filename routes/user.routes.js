@@ -37,6 +37,7 @@ import {
   productReview,
   productsByNames,
   productsByPrice,
+  updateProduct,
 } from "../controllers/product.controller.js";
 // import { sendQuery } from "../controllers/query.controller.js";
 const userRouter = express.Router();
@@ -97,6 +98,8 @@ userRouter.post("/product-by-id", getAllProductsById);
 userRouter.post("/product-by-name", productsByNames);
 
 userRouter.post("/product-by-price", productsByPrice);
+
+userRouter.put(`/update-product/:id`, updateProduct);
 
 userRouter.post("/change-status", isAuthenticated, changeStatus);
 
